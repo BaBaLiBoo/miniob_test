@@ -27,7 +27,7 @@ class PredicatePhysicalOperator : public PhysicalOperator
 {
 public:
   PredicatePhysicalOperator(unique_ptr<Expression> expr);
-
+  PredicatePhysicalOperator(std::unique_ptr<PhysicalOperator> child, FilterStmt *filter_stmt);
   virtual ~PredicatePhysicalOperator() = default;
 
   PhysicalOperatorType type() const override { return PhysicalOperatorType::PREDICATE; }
@@ -43,4 +43,5 @@ public:
 
 private:
   unique_ptr<Expression> expression_;
+  FilterStmt *filter_stmt_ = nullptr;
 };

@@ -1,17 +1,3 @@
-/* Copyright (c) 2021 OceanBase and/or its affiliates. All rights reserved.
-miniob is licensed under Mulan PSL v2.
-You can use this software according to the terms and conditions of the Mulan PSL v2.
-You may obtain a copy of Mulan PSL v2 at:
-         http://license.coscl.org.cn/MulanPSL2
-THIS SOFTWARE IS PROVIDED ON AN "AS IS" BASIS, WITHOUT WARRANTIES OF ANY KIND,
-EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO NON-INFRINGEMENT,
-MERCHANTABILITY OR FIT FOR A PARTICULAR PURPOSE.
-See the Mulan PSL v2 for more details. */
-
-//
-// Created by Wangyunlai on 2022/5/22.
-//
-
 #include "sql/stmt/filter_stmt.h"
 #include "common/lang/string.h"
 #include "common/log/log.h"
@@ -92,9 +78,9 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, unordered_map<st
   filter_unit = new FilterUnit;
 
   if (condition.left_is_attr) {
-    Table           *table = nullptr;
+    Table *table = nullptr;
     const FieldMeta *field = nullptr;
-    rc                     = get_table_and_field(db, default_table, tables, condition.left_attr, table, field);
+    rc = get_table_and_field(db, default_table, tables, condition.left_attr, table, field);
     if (rc != RC::SUCCESS) {
       LOG_WARN("cannot find attr");
       return rc;
@@ -109,9 +95,9 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, unordered_map<st
   }
 
   if (condition.right_is_attr) {
-    Table           *table = nullptr;
+    Table *table = nullptr;
     const FieldMeta *field = nullptr;
-    rc                     = get_table_and_field(db, default_table, tables, condition.right_attr, table, field);
+    rc = get_table_and_field(db, default_table, tables, condition.right_attr, table, field);
     if (rc != RC::SUCCESS) {
       LOG_WARN("cannot find attr");
       return rc;
@@ -127,6 +113,32 @@ RC FilterStmt::create_filter_unit(Db *db, Table *default_table, unordered_map<st
 
   filter_unit->set_comp(comp);
 
-  // 检查两个类型是否能够比较
+  // 类型兼容处理
+  FilterObj left = filter_unit->left();
+  FilterObj right = filter_unit->right();
+
+  if (left.is_attr && !right.is_attr) {
+    AttrType target_type = left.field.attr_type();
+    Value casted;
+    rc = Value::cast_to(right.value, target_type, casted);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to cast right value to type %d", target_type);
+      return rc;
+    }
+    FilterObj new_right;
+    new_right.init_value(casted);
+    filter_unit->set_right(new_right);
+  } else if (!left.is_attr && right.is_attr) {
+    AttrType target_type = right.field.attr_type();
+    Value casted;
+    rc = Value::cast_to(left.value, target_type, casted);
+    if (rc != RC::SUCCESS) {
+      LOG_WARN("failed to cast left value to type %d", target_type);
+      return rc;
+    }
+    FilterObj new_left;
+    new_left.init_value(casted);
+    filter_unit->set_left(new_left);
+  }
   return rc;
 }

@@ -15,6 +15,13 @@ See the Mulan PSL v2 for more details. */
 #include "sql/operator/nested_loop_join_physical_operator.h"
 
 NestedLoopJoinPhysicalOperator::NestedLoopJoinPhysicalOperator() {}
+NestedLoopJoinPhysicalOperator::NestedLoopJoinPhysicalOperator(
+  std::unique_ptr<PhysicalOperator> left,
+  std::unique_ptr<PhysicalOperator> right)
+{
+add_child(std::move(left));
+add_child(std::move(right));
+}
 
 RC NestedLoopJoinPhysicalOperator::open(Trx *trx)
 {

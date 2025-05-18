@@ -22,6 +22,11 @@ PredicatePhysicalOperator::PredicatePhysicalOperator(std::unique_ptr<Expression>
 {
   ASSERT(expression_->value_type() == AttrType::BOOLEANS, "predicate's expression should be BOOLEAN type");
 }
+PredicatePhysicalOperator::PredicatePhysicalOperator(std::unique_ptr<PhysicalOperator> child, FilterStmt *filter_stmt)
+  : filter_stmt_(filter_stmt)
+{
+  add_child(std::move(child));
+}
 
 RC PredicatePhysicalOperator::open(Trx *trx)
 {

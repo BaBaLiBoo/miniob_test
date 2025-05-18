@@ -55,7 +55,7 @@ public:
 
   void set_left(const FilterObj &obj) { left_ = obj; }
   void set_right(const FilterObj &obj) { right_ = obj; }
-
+  
   const FilterObj &left() const { return left_; }
   const FilterObj &right() const { return right_; }
 

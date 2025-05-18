@@ -229,7 +229,33 @@ string Value::to_string() const
   return res;
 }
 
-int Value::compare(const Value &other) const { return DataType::type_instance(this->attr_type_)->compare(*this, other); }
+int Value::compare(const Value &other) const {
+  AttrType lhs_type = this->attr_type_;
+  AttrType rhs_type = other.attr_type_;
+
+  // 类型转换规则：
+  // - 数值类型之间（INTS、FLOATS、BOOLEANS）统一转 float 比较
+  if ((lhs_type == AttrType::INTS || lhs_type == AttrType::FLOATS || lhs_type == AttrType::BOOLEANS) &&
+      (rhs_type == AttrType::INTS || rhs_type == AttrType::FLOATS || rhs_type == AttrType::BOOLEANS)) {
+    float lhs = this->get_float();
+    float rhs = other.get_float();
+    if (lhs < rhs) return -1;
+    if (lhs > rhs) return 1;
+    return 0;
+  }
+
+  // 字符串之间比较
+  if (lhs_type == AttrType::CHARS && rhs_type == AttrType::CHARS) {
+    return strcmp(this->get_string().c_str(), other.get_string().c_str());
+  }
+
+  // 跨类型比较（如 string 与 float 或 int），默认统一用 float
+  float lhs = this->get_float();
+  float rhs = other.get_float();
+  if (lhs < rhs) return -1;
+  if (lhs > rhs) return 1;
+  return 0;
+}
 
 int Value::get_int() const
 {
@@ -326,4 +352,27 @@ bool Value::get_boolean() const
     }
   }
   return false;
+}
+RC Value::add(const Value &left, const Value &right, Value &result) {
+  return DataType::type_instance(left.attr_type())->add(left, right, result);
+}
+
+RC Value::subtract(const Value &left, const Value &right, Value &result) {
+  return DataType::type_instance(left.attr_type())->subtract(left, right, result);
+}
+
+RC Value::multiply(const Value &left, const Value &right, Value &result) {
+  return DataType::type_instance(left.attr_type())->multiply(left, right, result);
+}
+
+RC Value::divide(const Value &left, const Value &right, Value &result) {
+  return DataType::type_instance(left.attr_type())->divide(left, right, result);
+}
+
+RC Value::negative(const Value &value, Value &result) {
+  return DataType::type_instance(value.attr_type())->negative(value, result);
+}
+
+RC Value::cast_to(const Value &value, AttrType to_type, Value &result) {
+  return DataType::type_instance(value.attr_type())->cast_to(value, to_type, result);
 }
